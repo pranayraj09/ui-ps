@@ -1,0 +1,36 @@
+.calendar {
+  .header {
+    text-align: center;
+  }
+
+  .days-of-week {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    background-color: #f0f0f0;
+
+    .day-name {
+      text-align: center;
+      padding: 10px;
+      border: 1px solid #ddd;
+    }
+  }
+
+  .dates-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    grid-auto-rows: minmax(100px, auto);
+
+    .date-cell {
+      padding: 10px;
+      border: 1px solid #ddd;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .empty {
+      background-color: #fafafa;
+    }
+  }
+}
+  
