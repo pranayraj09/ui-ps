@@ -2,7 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { weekNames, monthNames } from '../../utils/strings'
 import { fetchEvents } from '../../utils/api-config';
+import Header from '../Header/Header';
+import ExpandedEventDetails from '../ExpandedEventDetails/ExpandedEventDetails';
 import './Calendar.scss';
+import imageLoader from '../../utils/imageLoader';
 
 const Calendar = () => {
   const navigate = useNavigate();
@@ -19,20 +22,27 @@ const Calendar = () => {
   const isValidMonth = month >= 1 && month <= 12;
   const isValidYear = year >= 1;
   const isDateValid = isValidMonth && isValidYear;
-  
-  if (!isDateValid) {
-    return <div>Invalid date. Please use a valid month (1-12) and year (e.g., /2019/1).</div>;
-  }
 
   useEffect(() => {
-    const getEvents = async () => {
-      const eventsData = await fetchEvents();
-      console.log(eventsData);
-      setEvents(eventsData);
-    };
+    if (!isDateValid) {
+      // Current year and month
+      const currentDate = new Date();
+      const currentYear = currentDate.getFullYear();
+      const currentMonth = currentDate.getMonth() + 1;
 
-    getEvents();
-  }, []);
+      // Redirecting to current year and month
+      navigate(`/${currentYear}/${currentMonth}`);
+    } else {
+      // Fetching events if the date is valid
+      const getEvents = async () => {
+        const eventsData = await fetchEvents();
+        console.log(eventsData);
+        setEvents(eventsData);
+      };
+
+      getEvents();
+    }
+  }, [year, month, isDateValid, navigate]);
 
   // Generate the days in the month
   const generateCalendarDays = (year, month) => {
@@ -45,9 +55,8 @@ const Calendar = () => {
     return days;
   };
 
-  // Function to check if a date has events
-  const hasEventsOnDate = (date) => {
-    return events.find(event => {
+  const getEventsOnDate = (date) => {
+    return events.filter(event => {
       const eventDate = new Date(event.launchDate);
       return eventDate.getFullYear() === date.getFullYear() &&
              eventDate.getMonth() === date.getMonth() &&
@@ -60,9 +69,6 @@ const Calendar = () => {
 
   // Get the first day of the month
   const firstDayOfMonth = new Date(year, month - 1, 1).getDay();
-  // Last day of the month
-  const lastDayOfMonth = new Date(yearNum, monthNum, 0).getDay();
-  const cellsToAdd = lastDayOfMonth === 6 ? 0 : 7 - (lastDayOfMonth + 1);
 
   const goToPreviousMonth = () => {
     const newYear = monthNum === 1 ? yearNum - 1 : yearNum;
@@ -76,65 +82,6 @@ const Calendar = () => {
     navigate(`/${newYear}/${newMonth}`);
   };
 
-  // Function to render events for a given date
-  const renderEventsForDate = (date) => {
-    const dayEvents = events.filter(event => {
-      const eventDate = new Date(event.launchDate);
-      return eventDate.getFullYear() === date.getFullYear() &&
-             eventDate.getMonth() === date.getMonth() &&
-             eventDate.getDate() === date.getDate();
-    });
-
-    return dayEvents.map(event => {
-      let imageSrc;
-      try {
-        imageSrc = imageContext(`./${event.imageFilenameThumb}.webp`);
-      } catch (webpError) {
-        try {
-          imageSrc = imageContext(`./${event.imageFilenameThumb}.jpeg`);
-        } catch (jpegError) {
-          console.error(`Could not find image: ./${event.imageFilenameThumb}`);
-          imageSrc = ''; // Fallback?
-        }
-      }
-      
-      return (
-        <div key={event.id} className="event">
-          <img src={imageSrc} className="poster" alt={event.title} />
-        </div>
-      );
-    });
-  };
-
-  // Function to render expanded event details
-  const renderExpandedEventDetails = (event) => {
-
-    let imageSrcFull;
-    try {
-      imageSrcFull = imageContext(`./${event.imageFilenameFull}.webp`);
-    } catch (webpError) {
-      try {
-        imageSrcFull = imageContext(`./${event.imageFilenameFull}.jpeg`);
-      } catch (jpegError) {
-        console.error(`Could not find image: ./${event.imageFilenameFull}`);
-        imageSrcFull = ''; // Fallback?
-      }
-    }
-
-    return (
-      <div className="expanded-event-details">
-        <img src={imageSrcFull} alt={event.title} className="expanded-event-image" />
-        <div className="expanded-event-text">
-          <h3>{event.title}</h3>
-          <p dangerouslySetInnerHTML={{ __html: event.summary}}></p>
-          <p>Available: {new Date(event.launchDate).toLocaleDateString()}</p>
-          <a href={event.learnMoreLink} target="_blank" rel="noopener noreferrer">Learn More</a>
-          <a href={event.purchaseLink} target="_blank" rel="noopener noreferrer">Pre Order Now</a>
-        </div>
-      </div>
-    );
-  };
-
   const renderWeeks = () => {
     const totalDays = firstDayOfMonth + calendarDays.length;
     const numberOfWeeks = Math.ceil(totalDays / 7);
@@ -142,34 +89,36 @@ const Calendar = () => {
   
     for (let week = 0; week < numberOfWeeks; week++) {
       const days = [];
-      let hasEventInWeek = false;
-      let weekEvent;
+      let eventsInWeek = [];
   
       for (let day = 0; day < 7; day++) {
         const dateIndex = week * 7 + day - firstDayOfMonth;
         const date = calendarDays[dateIndex];
   
         if (date) {
-          const event = hasEventsOnDate(date);
-
-          if (event && !hasEventInWeek) {
-            hasEventInWeek = true;
-            weekEvent = event;
+          const dayEvents = getEventsOnDate(date);
+          const hasEvent = dayEvents.length > 0;
+          if (hasEvent) {
+            eventsInWeek.push(dayEvents[0]); // getting first event now, but can be changed if 2 or more events on same day
           }
-  
+
           days.push(
-            <div key={date.toString()} className={`date-cell ${event ? 'event-day' : ''}`}>
-              <span 
-                className="date-number"
-                onClick={() => {
-                  if (event) {
-                    setExpandedEventId(expandedEventId === event.id ? null : event.id);
-                  }
-                }}              >
+            <div key={date.toString()} className={`date-cell ${hasEvent ? 'event-day' : ''}`} 
+              onClick={() => {
+                if (hasEvent) {
+                  setExpandedEventId(expandedEventId === dayEvents[0].id ? null : dayEvents[0].id);
+                }
+              }}
+            >
+              <span className="date-number">
                 {date.getDate()}
               </span>
               <div className="events">
-                {renderEventsForDate(date)}
+                {dayEvents.map(event => (
+                    <div key={event.id} className="event">
+                      <img src={imageLoader(imageContext, event.imageFilenameThumb)} className="poster" alt={event.title} />
+                    </div>
+                ))}
               </div>
             </div>
           );
@@ -180,15 +129,17 @@ const Calendar = () => {
       }
   
       weeks.push(<div key={`week-${week}`} className="week-row">{days}</div>);
-  
-      // Render the expanded event details if there's an event in the week and its expanded
-      if (expandedEventId && weekEvent && expandedEventId === weekEvent.id) {
-        weeks.push(
-          <div key={`details-${week}`} className="event-details-row">
-            {renderExpandedEventDetails(weekEvent)}
-          </div>
-        );
-      }
+      
+      // Check all events in the week to see if any match the expandedEventId
+      eventsInWeek.forEach((event) => {
+        if (expandedEventId === event.id) {
+          weeks.push(
+            <div key={`details-${event.id}`} className="event-details-row">
+              <ExpandedEventDetails event={event} imageContext={imageContext} />
+            </div>
+          );
+        }
+      });
     }
   
     return weeks;
@@ -196,11 +147,12 @@ const Calendar = () => {
 
   return (
     <div className="calendar">
-      <div className="header">
-        <button onClick={goToPreviousMonth} className="chevron chevron-prev"></button>
-        <h2>{`${monthNames[monthNum - 1]} ${yearNum}`}</h2>
-        <button onClick={goToNextMonth} className="chevron chevron-next"></button>
-      </div>
+      <Header
+        monthName={monthNames[monthNum - 1]} 
+        year={yearNum}
+        goToPreviousMonth={goToPreviousMonth} 
+        goToNextMonth={goToNextMonth} 
+      />
       <div className="days-of-week">
         {weekNames.map(day => (
           <div key={day} className="day-name">{day}</div>

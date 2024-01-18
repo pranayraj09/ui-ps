@@ -1,0 +1,46 @@
+.header {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+
+  h2 {
+    font-family: 'Open Sans', sans-serif;
+    font-weight: 100;
+  }
+
+  .chevron {
+    background:  transparent;
+    border:  none;
+    cursor:  pointer;
+    display: block;
+    height: 12px;
+    position: relative;
+    width:  30px;
+
+    &:before,
+    &:after{
+      border: 8px solid transparent;
+      content: "";
+      display: block;
+      position: absolute;
+    }
+
+    &:before{
+      border-top-color: #000;
+      top: 0;
+    }
+
+    &:after{
+      border-top-color: #fff;
+      top: -2px;
+    }
+
+    &.chevron-prev {
+      transform: rotate(90deg);
+    }
+
+    &.chevron-next {
+      transform: rotate(270deg);
+    }
+  }
+}
