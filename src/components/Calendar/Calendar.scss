@@ -62,8 +62,45 @@
   }
 
   .dates-grid {
-    display: flex;
-    flex-wrap: wrap;
+    
+    .week-row {
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .event-details-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin: 5px;
+      border-top: 1px solid #ddd;
+      background: #f9f9f9;
+    }
+
+    .expanded-event-details {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+      position: relative;
+    }
+
+    .expanded-event-image {
+      width: 100%;
+    }
+
+    .expanded-event-text {
+      position: absolute;
+      color: #fff;
+      left: 24px;
+      top: 20%;
+      font-family: system-ui, sans-serif;
+
+      p {
+        width: 50%;
+        font-size: 10px;
+      }
+    }
 
     .date-cell {
       flex: 1 0 calc(90% / 7 - 2px);

@@ -7,7 +7,7 @@ import './Calendar.scss';
 const Calendar = () => {
   const navigate = useNavigate();
   const [events, setEvents] = useState([]);
-  const imageContext = require.context('../../assets', true, /\.webp$/);
+  const imageContext = require.context('../../assets', true, /\.(webp|jpeg|jpg)$/i);
   const [expandedEventId, setExpandedEventId] = useState(null);
   const { year, month } = useParams();
 
@@ -47,7 +47,7 @@ const Calendar = () => {
 
   // Function to check if a date has events
   const hasEventsOnDate = (date) => {
-    return events.some(event => {
+    return events.find(event => {
       const eventDate = new Date(event.launchDate);
       return eventDate.getFullYear() === date.getFullYear() &&
              eventDate.getMonth() === date.getMonth() &&
@@ -94,7 +94,7 @@ const Calendar = () => {
           imageSrc = imageContext(`./${event.imageFilenameThumb}.jpeg`);
         } catch (jpegError) {
           console.error(`Could not find image: ./${event.imageFilenameThumb}`);
-          imageSrc = ''; // Fallback image path
+          imageSrc = ''; // Fallback?
         }
       }
       
@@ -104,6 +104,94 @@ const Calendar = () => {
         </div>
       );
     });
+  };
+
+  // Function to render expanded event details
+  const renderExpandedEventDetails = (event) => {
+
+    let imageSrcFull;
+    try {
+      imageSrcFull = imageContext(`./${event.imageFilenameFull}.webp`);
+    } catch (webpError) {
+      try {
+        imageSrcFull = imageContext(`./${event.imageFilenameFull}.jpeg`);
+      } catch (jpegError) {
+        console.error(`Could not find image: ./${event.imageFilenameFull}`);
+        imageSrcFull = ''; // Fallback?
+      }
+    }
+
+    return (
+      <div className="expanded-event-details">
+        <img src={imageSrcFull} alt={event.title} className="expanded-event-image" />
+        <div className="expanded-event-text">
+          <h3>{event.title}</h3>
+          <p dangerouslySetInnerHTML={{ __html: event.summary}}></p>
+          <p>Available: {new Date(event.launchDate).toLocaleDateString()}</p>
+          <a href={event.learnMoreLink} target="_blank" rel="noopener noreferrer">Learn More</a>
+          <a href={event.purchaseLink} target="_blank" rel="noopener noreferrer">Pre Order Now</a>
+        </div>
+      </div>
+    );
+  };
+
+  const renderWeeks = () => {
+    const totalDays = firstDayOfMonth + calendarDays.length;
+    const numberOfWeeks = Math.ceil(totalDays / 7);
+    const weeks = [];
+  
+    for (let week = 0; week < numberOfWeeks; week++) {
+      const days = [];
+      let hasEventInWeek = false;
+      let weekEvent;
+  
+      for (let day = 0; day < 7; day++) {
+        const dateIndex = week * 7 + day - firstDayOfMonth;
+        const date = calendarDays[dateIndex];
+  
+        if (date) {
+          const event = hasEventsOnDate(date);
+
+          if (event && !hasEventInWeek) {
+            hasEventInWeek = true;
+            weekEvent = event;
+          }
+  
+          days.push(
+            <div key={date.toString()} className={`date-cell ${event ? 'event-day' : ''}`}>
+              <span 
+                className="date-number"
+                onClick={() => {
+                  if (event) {
+                    setExpandedEventId(expandedEventId === event.id ? null : event.id);
+                  }
+                }}              >
+                {date.getDate()}
+              </span>
+              <div className="events">
+                {renderEventsForDate(date)}
+              </div>
+            </div>
+          );
+        } else {
+          // Fill in the blanks for the first and last weeks
+          days.push(<div key={`empty-${week}-${day}`} className="date-cell empty"></div>);
+        }
+      }
+  
+      weeks.push(<div key={`week-${week}`} className="week-row">{days}</div>);
+  
+      // Render the expanded event details if there's an event in the week and its expanded
+      if (expandedEventId && weekEvent && expandedEventId === weekEvent.id) {
+        weeks.push(
+          <div key={`details-${week}`} className="event-details-row">
+            {renderExpandedEventDetails(weekEvent)}
+          </div>
+        );
+      }
+    }
+  
+    return weeks;
   };
 
   return (
@@ -119,28 +207,7 @@ const Calendar = () => {
         ))}
       </div>
       <div className="dates-grid">
-        {/* Empty cells to fill first week row */}
-        {Array.from({ length: firstDayOfMonth }, (_, index) => (
-          <div key={`empty-start-${index}`} className="date-cell empty"></div>
-        ))}
-        {/* Days of the month */}
-        {calendarDays.map(date => {
-          const hasEvent = hasEventsOnDate(date);
-          return (
-            <div key={date.toString()} className={`date-cell ${hasEvent ? 'event-day' : ''}`}>
-              <span className="date-number">
-                {date.getDate()}
-              </span>
-              <div className="events">
-                {renderEventsForDate(date)}
-              </div>
-            </div>
-          );
-        })}
-        {/* Empty cells to complete the last week row */}
-        {Array.from({ length: cellsToAdd }, (_, index) => (
-          <div key={`empty-end-${index}`} className="date-cell empty"></div>
-        ))}
+        {renderWeeks()}
       </div>
     </div>
   );
