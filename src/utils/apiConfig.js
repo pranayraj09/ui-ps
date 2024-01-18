@@ -1,4 +1,6 @@
-const API_URL = 'https://amock.io/api/get-events';
+import sampleData from './sampleData.json';
+
+const API_URL = 'https://amock.io/api/ps-game-events';
 
 export const fetchEvents = async () => {
   try {
@@ -9,7 +11,7 @@ export const fetchEvents = async () => {
     const data = await response.json();
     return data;
   } catch (error) {
-    console.error("Could not fetch events: ", error);
-    return [];
+    console.error("Could not fetch events, please update API path in apiConfig.js. using sample data for now: ", error);
+    return sampleData;
   }
 };

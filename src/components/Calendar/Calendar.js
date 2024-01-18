@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { weekNames, monthNames } from '../../utils/strings'
-import { fetchEvents } from '../../utils/api-config';
+import { fetchEvents } from '../../utils/apiConfig';
 import Header from '../Header/Header';
 import ExpandedEventDetails from '../ExpandedEventDetails/ExpandedEventDetails';
+import Event from '../Event/Event';
 import './Calendar.scss';
-import imageLoader from '../../utils/imageLoader';
 
 const Calendar = () => {
   const navigate = useNavigate();
@@ -83,63 +83,65 @@ const Calendar = () => {
   };
 
   const renderWeeks = () => {
-    const totalDays = firstDayOfMonth + calendarDays.length;
-    const numberOfWeeks = Math.ceil(totalDays / 7);
+    const totalCells = Math.ceil((firstDayOfMonth + calendarDays.length) / 7) * 7;
     const weeks = [];
+    let weekDays = [];
+    let weekEvents = [];
   
-    for (let week = 0; week < numberOfWeeks; week++) {
-      const days = [];
-      let eventsInWeek = [];
+    for (let cell = 0; cell < totalCells; cell++) {
+      const dateIndex = cell - firstDayOfMonth;
+      const date = calendarDays[dateIndex];
   
-      for (let day = 0; day < 7; day++) {
-        const dateIndex = week * 7 + day - firstDayOfMonth;
-        const date = calendarDays[dateIndex];
-  
-        if (date) {
-          const dayEvents = getEventsOnDate(date);
-          const hasEvent = dayEvents.length > 0;
-          if (hasEvent) {
-            eventsInWeek.push(dayEvents[0]); // getting first event now, but can be changed if 2 or more events on same day
-          }
-
-          days.push(
-            <div key={date.toString()} className={`date-cell ${hasEvent ? 'event-day' : ''}`} 
-              onClick={() => {
-                if (hasEvent) {
-                  setExpandedEventId(expandedEventId === dayEvents[0].id ? null : dayEvents[0].id);
-                }
-              }}
-            >
-              <span className="date-number">
-                {date.getDate()}
-              </span>
-              <div className="events">
-                {dayEvents.map(event => (
-                    <div key={event.id} className="event">
-                      <img src={imageLoader(imageContext, event.imageFilenameThumb)} className="poster" alt={event.title} />
-                    </div>
-                ))}
-              </div>
-            </div>
-          );
-        } else {
-          // Fill in the blanks for the first and last weeks
-          days.push(<div key={`empty-${week}-${day}`} className="date-cell empty"></div>);
+      if (date) {
+        const dayEvents = getEventsOnDate(date);
+        const hasEvent = dayEvents.length > 0;
+        if (hasEvent) {
+          weekEvents.push(dayEvents[0]);
         }
+  
+        weekDays.push(
+          <div key={date.toString()} className={`date-cell ${hasEvent ? 'event-day' : ''}`} 
+            onClick={() => {
+              if (hasEvent) {
+                setExpandedEventId(expandedEventId === dayEvents[0].id ? null : dayEvents[0].id);
+              }
+            }}
+          >
+            <span className="date-number">
+              {date.getDate()}
+            </span>
+            <div className="events">
+              {dayEvents.map(event => (
+                <div key={event.id} className="event">
+                  {dayEvents.map(event => (
+                    <Event key={event.id} event={event} imageContext={imageContext} />
+                  ))}
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      } else {
+        weekDays.push(<div key={`empty-${cell}`} className="date-cell empty"></div>);
       }
   
-      weeks.push(<div key={`week-${week}`} className="week-row">{days}</div>);
-      
-      // Check all events in the week to see if any match the expandedEventId
-      eventsInWeek.forEach((event) => {
-        if (expandedEventId === event.id) {
-          weeks.push(
-            <div key={`details-${event.id}`} className="event-details-row">
-              <ExpandedEventDetails event={event} imageContext={imageContext} />
-            </div>
-          );
-        }
-      });
+      // Check if the week is complete, or if we're at the end of the calendar cells
+      if ((cell + 1) % 7 === 0 || cell === totalCells - 1) {
+        weeks.push(<div key={`week-${weeks.length}`} className="week-row">{weekDays}</div>);
+        weekEvents.forEach((event) => {
+          if (expandedEventId === event.id) {
+            weeks.push(
+              <div key={`details-${event.id}`} className="event-details-row">
+                <ExpandedEventDetails event={event} imageContext={imageContext} />
+              </div>
+            );
+          }
+        });
+  
+        // Reset for the next week
+        weekDays = [];
+        weekEvents = [];
+      }
     }
   
     return weeks;

@@ -17,6 +17,8 @@
 
 .expanded-event-image {
   width: 100%;
+  max-height: 300px;
+  object-fit: cover;
 }
 
 .expanded-event-text {
@@ -24,7 +26,9 @@
   color: #fff;
   font-family: system-ui, sans-serif;
   left: 24px;
-  top: 20%;
+  top: 50%;
+  left: 0%;
+  transform: translate(3%, -50%);
 
   p {
     font-size: 10px;
