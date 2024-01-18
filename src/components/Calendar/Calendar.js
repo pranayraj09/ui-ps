@@ -109,9 +109,9 @@ const Calendar = () => {
   return (
     <div className="calendar">
       <div className="header">
-        <button onClick={goToPreviousMonth}>&lt;</button>
+        <button onClick={goToPreviousMonth} className="chevron chevron-prev"></button>
         <h2>{`${monthNames[monthNum - 1]} ${yearNum}`}</h2>
-        <button onClick={goToNextMonth}>&gt;</button>
+        <button onClick={goToNextMonth} className="chevron chevron-next"></button>
       </div>
       <div className="days-of-week">
         {weekNames.map(day => (
