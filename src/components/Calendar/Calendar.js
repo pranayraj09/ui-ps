@@ -1,10 +1,12 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { weekNames, monthNames } from '../../Utils/strings';
+import { weekNames, monthNames } from '../../utils/strings'
+import { fetchEvents } from '../../utils/api-config';
 import './Calendar.scss';
 
 const Calendar = () => {
   const navigate = useNavigate();
+  const [events, setEvents] = useState([]);
   const { year, month } = useParams();
 
   // Convert string params to numbers
@@ -19,6 +21,16 @@ const Calendar = () => {
   if (!isDateValid) {
     return <div>Invalid date. Please use a valid month (1-12) and year (e.g., /2019/1).</div>;
   }
+
+  useEffect(() => {
+    const getEvents = async () => {
+      const eventsData = await fetchEvents();
+      console.log(eventsData);
+      setEvents(eventsData);
+    };
+
+    getEvents();
+  }, []);
 
   // Helper function to generate the days in the month
   const generateCalendarDays = (year, month) => {
@@ -49,6 +61,25 @@ const Calendar = () => {
     navigate(`/${newYear}/${newMonth}`);
   };
 
+  // Function to render events for a given date
+  const renderEventsForDate = (date) => {
+    const dayEvents = events.filter(event => {
+      const eventDate = new Date(event.launchDate);
+      return eventDate.getFullYear() === date.getFullYear() &&
+             eventDate.getMonth() === date.getMonth() &&
+             eventDate.getDate() === date.getDate();
+    });
+
+    return dayEvents.map(event => {
+      return (
+        <div key={event.id} className="event">
+          <img src={require(`../../assets/${event.imageFilenameThumb}.webp`).default} alt={event.title} />
+          <span>{event.title}</span>
+        </div>
+      );
+    });
+  };
+
   return (
     <div className="calendar">
       <div className="header">
@@ -69,7 +100,10 @@ const Calendar = () => {
         {/* Days of the month */}
         {calendarDays.map(date => (
           <div key={date.toString()} className="date-cell">
-            {date.getDate()}
+            <span className="date-number">{date.getDate()}</span>
+            <div className="events">
+              {renderEventsForDate(date)}
+            </div>
           </div>
         ))}
       </div>
