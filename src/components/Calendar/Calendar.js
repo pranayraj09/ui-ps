@@ -7,6 +7,8 @@ import './Calendar.scss';
 const Calendar = () => {
   const navigate = useNavigate();
   const [events, setEvents] = useState([]);
+  const imageContext = require.context('../../assets', true, /\.webp$/);
+  const [expandedEventId, setExpandedEventId] = useState(null);
   const { year, month } = useParams();
 
   // Convert string params to numbers
@@ -32,7 +34,7 @@ const Calendar = () => {
     getEvents();
   }, []);
 
-  // Helper function to generate the days in the month
+  // Generate the days in the month
   const generateCalendarDays = (year, month) => {
     const date = new Date(year, month - 1, 1);
     const days = [];
@@ -43,11 +45,24 @@ const Calendar = () => {
     return days;
   };
 
+  // Function to check if a date has events
+  const hasEventsOnDate = (date) => {
+    return events.some(event => {
+      const eventDate = new Date(event.launchDate);
+      return eventDate.getFullYear() === date.getFullYear() &&
+             eventDate.getMonth() === date.getMonth() &&
+             eventDate.getDate() === date.getDate();
+    });
+  };
+
   // Generate the days for the current month
   const calendarDays = generateCalendarDays(year, month);
 
   // Get the first day of the month
   const firstDayOfMonth = new Date(year, month - 1, 1).getDay();
+  // Last day of the month
+  const lastDayOfMonth = new Date(yearNum, monthNum, 0).getDay();
+  const cellsToAdd = lastDayOfMonth === 6 ? 0 : 7 - (lastDayOfMonth + 1);
 
   const goToPreviousMonth = () => {
     const newYear = monthNum === 1 ? yearNum - 1 : yearNum;
@@ -71,10 +86,21 @@ const Calendar = () => {
     });
 
     return dayEvents.map(event => {
+      let imageSrc;
+      try {
+        imageSrc = imageContext(`./${event.imageFilenameThumb}.webp`);
+      } catch (webpError) {
+        try {
+          imageSrc = imageContext(`./${event.imageFilenameThumb}.jpeg`);
+        } catch (jpegError) {
+          console.error(`Could not find image: ./${event.imageFilenameThumb}`);
+          imageSrc = ''; // Fallback image path
+        }
+      }
+      
       return (
         <div key={event.id} className="event">
-          <img src={require(`../../assets/${event.imageFilenameThumb}.webp`).default} alt={event.title} />
-          <span>{event.title}</span>
+          <img src={imageSrc} className="poster" alt={event.title} />
         </div>
       );
     });
@@ -93,18 +119,27 @@ const Calendar = () => {
         ))}
       </div>
       <div className="dates-grid">
-        {/* Empty cells if the month does not start on Sunday */}
+        {/* Empty cells to fill first week row */}
         {Array.from({ length: firstDayOfMonth }, (_, index) => (
-          <div key={index} className="date-cell empty"></div>
+          <div key={`empty-start-${index}`} className="date-cell empty"></div>
         ))}
         {/* Days of the month */}
-        {calendarDays.map(date => (
-          <div key={date.toString()} className="date-cell">
-            <span className="date-number">{date.getDate()}</span>
-            <div className="events">
-              {renderEventsForDate(date)}
+        {calendarDays.map(date => {
+          const hasEvent = hasEventsOnDate(date);
+          return (
+            <div key={date.toString()} className={`date-cell ${hasEvent ? 'event-day' : ''}`}>
+              <span className="date-number">
+                {date.getDate()}
+              </span>
+              <div className="events">
+                {renderEventsForDate(date)}
+              </div>
             </div>
-          </div>
+          );
+        })}
+        {/* Empty cells to complete the last week row */}
+        {Array.from({ length: cellsToAdd }, (_, index) => (
+          <div key={`empty-end-${index}`} className="date-cell empty"></div>
         ))}
       </div>
     </div>

@@ -23,6 +23,9 @@ module.exports = {
       {
         test: /\.(png|svg|jpg|jpeg|gif|webp)$/i,
         type: 'asset/resource',
+        generator: {
+          filename: 'assets/[hash][ext][query]'
+        }
       },
       {
         test: /\.scss$/,
