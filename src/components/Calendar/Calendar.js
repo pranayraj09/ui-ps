@@ -31,7 +31,7 @@ const Calendar = () => {
       const currentMonth = currentDate.getMonth() + 1;
 
       // Redirecting to current year and month
-      navigate(`/${currentYear}/${currentMonth}`);
+      navigate(`${process.env.PUBLIC_URL}/${currentYear}/${currentMonth}`);
     } else {
       // Fetching events if the date is valid
       const getEvents = async () => {
@@ -73,13 +73,13 @@ const Calendar = () => {
   const goToPreviousMonth = () => {
     const newYear = monthNum === 1 ? yearNum - 1 : yearNum;
     const newMonth = monthNum === 1 ? 12 : monthNum - 1;
-    navigate(`/${newYear}/${newMonth}`);
+    navigate(`${process.env.PUBLIC_URL}/${newYear}/${newMonth}`);
   };
 
   const goToNextMonth = () => {
     const newYear = monthNum === 12 ? yearNum + 1 : yearNum;
     const newMonth = monthNum === 12 ? 1 : monthNum + 1;
-    navigate(`/${newYear}/${newMonth}`);
+    navigate(`${process.env.PUBLIC_URL}/${newYear}/${newMonth}`);
   };
 
   const renderWeeks = () => {
