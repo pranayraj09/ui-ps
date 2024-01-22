@@ -54,3 +54,36 @@
     background-color: #c54820;
   }
 }
+
+.spinner {
+  width: 100%;
+  height: 2px;
+  background-color: transparent;
+  position: relative;
+  overflow: hidden;
+
+  &:before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 0;
+    height: 2px;
+    background-color: #2b67b7;
+    animation: growSpinner 1.5s linear infinite;
+  }
+}
+
+@keyframes growSpinner {
+  0% {
+    width: 0;
+    left: 50%;
+  }
+  50% {
+    width: 100%;
+    left: 0;
+  }
+  100% {
+    width: 0;
+    left: 100%;
+  }
+}

@@ -1,13 +1,21 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { formatDate } from "../../utils/formatDate";
 import './ExpandedEventDetails.scss'
 import imageLoader from '../../utils/imageLoader';
 
+const Spinner = () => <div className="spinner"></div>;
+
 const ExpandedEventDetails = ({ event, imageContext }) => {
+  const [isLoading, setIsLoading] = useState(true);
 
   return (
     <div className="expanded-event-details">
-      <img src={imageLoader(imageContext, event.imageFilenameFull)} alt={event.title} className="expanded-event-image" />
+      {isLoading && <Spinner />}
+      <img
+        src={imageLoader(imageContext, event.imageFilenameFull)}
+        alt={event.title}
+        onLoad={() => setIsLoading(false)}
+        className="expanded-event-image" />
       <div className="expanded-event-text">
         <h3>{event.title}</h3>
         <p dangerouslySetInnerHTML={{ __html: event.summary}}></p>
