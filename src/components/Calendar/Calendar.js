@@ -64,7 +64,7 @@ const Calendar = () => {
     });
   };
 
-  // Generate the days for the current month
+  // Generate the days for the current month 
   const calendarDays = generateCalendarDays(year, month);
 
   // Get the first day of the month
